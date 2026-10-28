@@ -2,9 +2,9 @@ name: ROS 2 CI
 
 on:
   push:
-    branches: ['**']        # każda gałąź
+    branches: ['**']
   pull_request:
-    branches: [jazzy]       # PR-y do gałęzi głównej
+    branches: [jazzy]
 
 jobs:
   lint:
@@ -25,7 +25,7 @@ jobs:
         with:
           path: src/repo
 
-      - name: Zależności (rosdep)
+      - name: Dependencies (rosdep)
         run: |
           apt-get update
           rosdep update
@@ -47,12 +47,10 @@ jobs:
           colcon test-result --verbose
 
       - name: clang-tidy
-        # uruchamia się, jeśli build przeszedł, nawet gdy testy nie przeszły
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         shell: bash
         run: |
           apt-get install -y --no-install-recommends clang-tidy jq
-          # colcon tworzy compile_commands.json osobno dla każdego pakietu; łączymy je
           shopt -s nullglob
           dbs=(build/*/compile_commands.json)
           if [ ${#dbs[@]} -eq 0 ]; then echo "Brak pakietów C++, pomijam"; exit 0; fi

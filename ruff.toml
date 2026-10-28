@@ -3,11 +3,11 @@ target-version = "py312"
 
 [lint]
 select = [
-  "E", "W",   # pycodestyle
-  "F",        # pyflakes
-  "I",        # sortowanie importów
-  "B",        # bugbear (typowe błędy)
-  "UP",       # nowocześniejsza składnia
+  "E", "W",
+  "F",
+  "I",
+  "B",
+  "UP",
 ]
 
 [format]

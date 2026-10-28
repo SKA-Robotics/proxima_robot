@@ -1,5 +1,5 @@
-# proxima_common
-Packages common to both physical and simulated Proxima robot.
+# proxima_robot
+ROS2 packages for Proxima robot.
 
 ## Test moteusów
 

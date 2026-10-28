@@ -62,6 +62,8 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
+  hardware_interface::CallbackReturn release_resources();
+  hardware_interface::CallbackReturn stop_all();
 
   std::vector<MoteusJoint> joints_;
   std::vector<mjbots::moteus::CanFdFrame> frames_to_send_;

@@ -21,30 +21,45 @@ def generate_launch_description():
 
     declared_args = [
         DeclareLaunchArgument(
-            'use_mock_hardware', default_value='false',
-            description='true = mock_components/GenericSystem zamiast prawdziwych silników'),
+            'use_mock_hardware',
+            default_value='false',
+            description='true = mock_components/GenericSystem zamiast prawdziwych silników',
+        ),
         DeclareLaunchArgument('can_id_1', default_value='1', description='CAN ID silnika joint1'),
         DeclareLaunchArgument('can_id_2', default_value='2', description='CAN ID silnika joint2'),
         DeclareLaunchArgument('can_id_3', default_value='3', description='CAN ID silnika joint3'),
         DeclareLaunchArgument(
-            'effort_max', default_value='1.0', description='Maksymalny moment [Nm] (wszystkie przeguby)'),
+            'effort_max',
+            default_value='1.0',
+            description='Maksymalny moment [Nm] (wszystkie przeguby)',
+        ),
         DeclareLaunchArgument('rviz', default_value='false', description='Uruchom RViz'),
     ]
 
-    robot_description_content = Command([
-        PathJoinSubstitution([FindExecutable(name='xacro')]), ' ',
-        PathJoinSubstitution([FindPackageShare(pkg), 'robots', 'moteus_test.urdf.xacro']),
-        ' use_mock_hardware:=', LaunchConfiguration('use_mock_hardware'),
-        ' can_id_1:=', LaunchConfiguration('can_id_1'),
-        ' can_id_2:=', LaunchConfiguration('can_id_2'),
-        ' can_id_3:=', LaunchConfiguration('can_id_3'),
-        ' effort_max:=', LaunchConfiguration('effort_max'),
-    ])
+    robot_description_content = Command(
+        [
+            PathJoinSubstitution([FindExecutable(name='xacro')]),
+            ' ',
+            PathJoinSubstitution([FindPackageShare(pkg), 'robots', 'moteus_test.urdf.xacro']),
+            ' use_mock_hardware:=',
+            LaunchConfiguration('use_mock_hardware'),
+            ' can_id_1:=',
+            LaunchConfiguration('can_id_1'),
+            ' can_id_2:=',
+            LaunchConfiguration('can_id_2'),
+            ' can_id_3:=',
+            LaunchConfiguration('can_id_3'),
+            ' effort_max:=',
+            LaunchConfiguration('effort_max'),
+        ]
+    )
     robot_description = {
         'robot_description': ParameterValue(robot_description_content, value_type=str)
     }
 
-    controllers_file = PathJoinSubstitution([FindPackageShare(pkg), 'config', 'moteus_test_controllers.yaml'])
+    controllers_file = PathJoinSubstitution(
+        [FindPackageShare(pkg), 'config', 'moteus_test_controllers.yaml']
+    )
 
     # robot_state_publisher publikuje /robot_description, z którego korzysta controller_manager
     robot_state_publisher = Node(
@@ -83,9 +98,12 @@ def generate_launch_description():
         )
     )
 
-    return LaunchDescription(declared_args + [
-        robot_state_publisher,
-        control_node,
-        joint_state_broadcaster_spawner,
-        rviz_after_jsb,
-    ])
+    return LaunchDescription(
+        declared_args
+        + [
+            robot_state_publisher,
+            control_node,
+            joint_state_broadcaster_spawner,
+            rviz_after_jsb,
+        ]
+    )

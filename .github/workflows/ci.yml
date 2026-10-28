@@ -1,0 +1,59 @@
+name: ROS 2 CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [jazzy]
+
+jobs:
+  lint:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Lintery
+        uses: pre-commit/action@v3.0.1
+
+  build-and-test:
+    runs-on: ubuntu-24.04
+    container: ros:jazzy
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: src/repo
+
+      - name: Dependencies (rosdep)
+        run: |
+          apt-get update
+          rosdep update
+          rosdep install --from-paths src --ignore-src -y
+
+      - name: Build
+        id: build
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon build --event-handlers console_cohesion+ \
+            --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+
+      - name: Testy
+        shell: bash
+        run: |
+          source /opt/ros/jazzy/setup.bash
+          colcon test --event-handlers console_cohesion+
+          colcon test-result --verbose
+
+      - name: clang-tidy
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: |
+          apt-get install -y --no-install-recommends clang-tidy jq
+          shopt -s nullglob
+          dbs=(build/*/compile_commands.json)
+          if [ ${#dbs[@]} -eq 0 ]; then echo "Brak pakietów C++, pomijam"; exit 0; fi
+          jq -s 'add' "${dbs[@]}" > build/compile_commands.json
+          find src/repo -name '*.cpp' -not -path '*/test/*' \
+            | xargs -r -P "$(nproc)" -n 1 clang-tidy -p build --quiet

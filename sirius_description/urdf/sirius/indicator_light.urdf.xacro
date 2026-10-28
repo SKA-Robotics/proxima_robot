@@ -10,7 +10,7 @@
         <mesh filename="package://sirius_description/meshes/sirius/indicator_light.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
-    <collision>    
+    <collision>
       <geometry>
           <cylinder length="${collisions['indicator_light_height']}" radius="${collisions['indicator_light_radius']}"/>
       </geometry>
@@ -18,9 +18,9 @@
     </collision>
   </link>
   <gazebo reference="${_prefix}indicator_light">
-      <visual>  
+      <visual>
         <xacro:element xacro:name="xacro:${material}" />
-      </visual> 
+      </visual>
   </gazebo>
 </xacro:macro>
 </robot>

@@ -16,9 +16,9 @@
     </collision>
   </link>
   <gazebo reference="${prefix}_camera">
-      <visual>  
+      <visual>
         <xacro:element xacro:name="xacro:${material}" />
-      </visual> 
+      </visual>
       <sensor type="camera" name="${prefix}_camera">
       <update_rate>30.0</update_rate>
       <camera name="${prefix}_camera">

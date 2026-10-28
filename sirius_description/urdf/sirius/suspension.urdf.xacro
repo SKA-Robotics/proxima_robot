@@ -4,7 +4,7 @@
   <xacro:property name="sign_x" value="${1 - 2 * flip_x_plane}"/>
   <xacro:property name="sign_y" value="${1 - 2 * flip_y_plane}"/>
   <link name="${_prefix}suspension">
-    <visual>    
+    <visual>
       <material name="${material}"/>
       <geometry>
         <mesh filename="package://sirius_description/meshes/sirius/suspension.stl" scale="0.001 0.001 0.001"/>
@@ -16,7 +16,7 @@
       <mass value="${inertial['suspension_mass']}"/>
       <inertia ixx="${inertial['suspension_inertia']['ixx']}" ixy="${sign_y * sign_x * inertial['suspension_inertia']['ixy']}" ixz="${sign_x * inertial['suspension_inertia']['ixz']}" iyy="${inertial['suspension_inertia']['iyy']}" iyz="${sign_y * inertial['suspension_inertia']['iyz']}" izz="${inertial['suspension_inertia']['izz']}"/>
     </inertial>
-    <collision>    
+    <collision>
       <geometry>
         <box size="${collisions['suspension_width']} ${collisions['suspension_thickness']} ${collisions['suspension_length']}"/>
       </geometry>
@@ -24,9 +24,9 @@
     </collision>
   </link>
   <gazebo reference="${_prefix}suspension">
-    <visual>  
+    <visual>
       <xacro:element xacro:name="xacro:${material}" />
-    </visual> 
+    </visual>
   </gazebo>
 </xacro:macro>
 </robot>

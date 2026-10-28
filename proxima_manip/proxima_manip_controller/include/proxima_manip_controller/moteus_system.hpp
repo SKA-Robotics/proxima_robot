@@ -1,18 +1,17 @@
 #ifndef PROXIMA_MANIP_CONTROLLER__MOTEUS_SYSTEM_HPP_
 #define PROXIMA_MANIP_CONTROLLER__MOTEUS_SYSTEM_HPP_
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <vector>
-#include <limits>
 
 #include "hardware_interface/system_interface.hpp"
 #include "hardware_interface/types/hardware_interface_return_values.hpp"
+#include "moteus.h"
 #include "rclcpp/macros.hpp"
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
-
-#include "moteus.h"
 
 namespace proxima_manip_controller
 {
@@ -62,7 +61,6 @@ public:
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
 
 private:
-
   std::vector<MoteusJoint> joints_;
   std::vector<mjbots::moteus::CanFdFrame> frames_to_send_;
   std::vector<mjbots::moteus::CanFdFrame> answer_frames_;

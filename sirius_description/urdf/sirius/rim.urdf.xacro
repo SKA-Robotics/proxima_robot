@@ -8,17 +8,17 @@
         <mesh filename="package://sirius_description/meshes/sirius/rim.stl" scale="0.001 0.001 0.001"/>
       </geometry>
     </visual>
-    <collision>    
+    <collision>
       <geometry>
         <cylinder length="${mechanical['rim_width']}" radius="${mechanical['wheel_radius'] * 0.8}"/>
       </geometry>
       <origin xyz="0 0 0" rpy="${pi/2} 0 0" />
     </collision>
-  </link>    
+  </link>
   <gazebo reference="${_prefix}rim">
-    <visual>  
+    <visual>
       <xacro:element xacro:name="xacro:${material}" />
-    </visual> 
-  </gazebo>    
+    </visual>
+  </gazebo>
 </xacro:macro>
 </robot>

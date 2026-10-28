@@ -6,9 +6,9 @@ namespace proxima_manip_controller
 hardware_interface::CallbackReturn DynamixelSystem::on_init(
   const hardware_interface::HardwareComponentInterfaceParams & params)
 {
-  if (hardware_interface::SystemInterface::on_init(params) !=
-    hardware_interface::CallbackReturn::SUCCESS)
-  {
+  if (
+    hardware_interface::SystemInterface::on_init(params) !=
+    hardware_interface::CallbackReturn::SUCCESS) {
     return hardware_interface::CallbackReturn::ERROR;
   }
 

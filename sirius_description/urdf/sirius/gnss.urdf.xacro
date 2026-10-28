@@ -18,7 +18,7 @@
       </geometry>
       <origin xyz="0 0 ${collisions['gnss_height']/2}" rpy="${pi/2} 0 0" />
     </visual>
-    <collision>    
+    <collision>
       <geometry>
           <cylinder length="${collisions['gnss_height']}" radius="${collisions['gnss_radius']}"/>
       </geometry>
@@ -71,11 +71,11 @@
       </plugin>
     </sensor>
   </gazebo>
-  
+
   <gazebo reference="${_prefix}gnss">
-      <visual>  
+      <visual>
         <xacro:element xacro:name="xacro:${material}" />
-      </visual> 
+      </visual>
   </gazebo>
 </xacro:macro>
 </robot>

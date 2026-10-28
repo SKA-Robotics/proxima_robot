@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="sirius">
-  
+
 
   <xacro:arg name="calibration_path" default=""/>
   <xacro:arg name="datum" default="[50.878009, 20.642403, 144.41]"/>
@@ -11,21 +11,21 @@
   <xacro:arg name="year" default=""/>
   <xacro:arg name="manipulator" default="none"/>
 
-  <xacro:property name="calibration_path" value="$(arg calibration_path)" /> 
+  <xacro:property name="calibration_path" value="$(arg calibration_path)" />
   <xacro:if value="${calibration_path != ''}">
-    <xacro:property name="calibration" value="${xacro.load_yaml(calibration_path)}" /> 
+    <xacro:property name="calibration" value="${xacro.load_yaml(calibration_path)}" />
   </xacro:if>
   <xacro:property name="datum" value="${$(arg datum)}" />
   <xacro:property name="elevation" value="$(arg elevation)" />
-  <xacro:property name="imu_frequency" value="$(arg imu_frequency)" />  
+  <xacro:property name="imu_frequency" value="$(arg imu_frequency)" />
   <xacro:property name="gazebo_origin" value="${$(arg gazebo_origin)}" />
-  <xacro:property name="stereo_fps" value="$(arg stereo_fps)" /> 
+  <xacro:property name="stereo_fps" value="$(arg stereo_fps)" />
   <xacro:property name="year" value="$(arg year)" />
   <xacro:property name="manipulator" value="$(arg manipulator)"/>
 
   <!-- Load model parameters -->
-  <xacro:property name="mechanical" value="${xacro.load_yaml('$(find sirius_description)/config/mechanical.yaml')}" /> 
-  
+  <xacro:property name="mechanical" value="${xacro.load_yaml('$(find sirius_description)/config/mechanical.yaml')}" />
+
   <!-- Load materials and subcomponents -->
   <xacro:include filename="$(find sirius_description)/urdf/materials.urdf.xacro" />
   <xacro:include filename="$(find sirius_description)/urdf/sirius/indicator_light.urdf.xacro" />
@@ -53,11 +53,11 @@
     <xacro:suspension prefix="${prefix}" material="dark_bronze" flip_x_plane="${flip_x_plane}" flip_y_plane="${flip_y_plane}" />
     <xacro:wheel prefix="${prefix}" material="dark_gray" material_rim="white" flip="${flip_y_plane}" />
 
-    <xacro:joint  type="continuous" 
-                  parent="${prefix}_suspension" 
-                  child="${prefix}_wheel" 
-                  xyz="${(1 - 2 * flip_x_plane)  * (mechanical['wheel_base'] - mechanical['suspension_separation_x'])/2 } ${(1 - 2 * flip_y_plane)  * (mechanical['wheel_track'] - mechanical['suspension_separation_y'])/2} ${-mechanical['suspension_height']}" 
-                  rpy="0 0 0" 
+    <xacro:joint  type="continuous"
+                  parent="${prefix}_suspension"
+                  child="${prefix}_wheel"
+                  xyz="${(1 - 2 * flip_x_plane)  * (mechanical['wheel_base'] - mechanical['suspension_separation_x'])/2 } ${(1 - 2 * flip_y_plane)  * (mechanical['wheel_track'] - mechanical['suspension_separation_y'])/2} ${-mechanical['suspension_height']}"
+                  rpy="0 0 0"
                   axis="0 1 0"
                   limit_effort="80.0"
                   limit_velocity="8.0" />
@@ -80,8 +80,8 @@
   <xacro:joint child="platform" xyz="0 0 ${mechanical['wheel_radius'] + mechanical['suspension_height'] - mechanical['suspension_z']}" />
   <xacro:joint parent="platform" child="back_left_suspension" xyz="${-mechanical['suspension_separation_x']/2} ${mechanical['suspension_separation_y']/2} ${mechanical['suspension_z']}" />
   <xacro:joint parent="platform" child="back_right_suspension" xyz="${-mechanical['suspension_separation_x']/2} ${-mechanical['suspension_separation_y']/2} ${mechanical['suspension_z']}" />
-  <xacro:joint parent="platform" child="front_left_suspension" xyz="${mechanical['suspension_separation_x']/2} ${mechanical['suspension_separation_y']/2} ${mechanical['suspension_z']}" /> 
-  <xacro:joint parent="platform" child="front_right_suspension" xyz="${mechanical['suspension_separation_x']/2} ${-mechanical['suspension_separation_y']/2} ${mechanical['suspension_z']}" /> 
+  <xacro:joint parent="platform" child="front_left_suspension" xyz="${mechanical['suspension_separation_x']/2} ${mechanical['suspension_separation_y']/2} ${mechanical['suspension_z']}" />
+  <xacro:joint parent="platform" child="front_right_suspension" xyz="${mechanical['suspension_separation_x']/2} ${-mechanical['suspension_separation_y']/2} ${mechanical['suspension_z']}" />
   <xacro:joint parent="platform" child="indicator_light" xyz="${mechanical['indicator_light_xyz']}"/>
 
   <xacro:joint parent="platform" child="mast_front_camera" xyz="${mechanical['front_mast_camera_xyz']}" rpy="${mechanical['front_mast_camera_rpy']}"/>
@@ -94,7 +94,7 @@
     <hardware>
       <plugin>gazebo_ros2_control/GazeboSystem</plugin>
     </hardware>
-    
+
     <xacro:macro name="wheel_interface" params="name">
       <joint name="${name}_wheel_joint">
         <command_interface name="velocity">
@@ -114,10 +114,10 @@
 
   <xacro:if value="${manipulator != 'none'}">
     <xacro:include filename="$(find sirius_description)/urdf/sirius/manipulators/$(arg manipulator).urdf.xacro" />
-    <xacro:joint parent="platform" child="root_link" xyz="${mechanical['suspension_separation_x']/2} 0 ${mechanical['suspension_z'] + 0.045}" rpy="0 0 0"/> 
+    <xacro:joint parent="platform" child="root_link" xyz="${mechanical['suspension_separation_x']/2} 0 ${mechanical['suspension_z'] + 0.045}" rpy="0 0 0"/>
   </xacro:if>
 
-  <gazebo> 
+  <gazebo>
     <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
       <parameters>$(find sirius_description)/config/controllers.yaml</parameters>
     </plugin>

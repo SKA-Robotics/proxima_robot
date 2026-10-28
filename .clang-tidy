@@ -1,0 +1,16 @@
+Checks: >
+  -*,
+  bugprone-*,
+  performance-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-lambda-function-name
+
+WarningsAsErrors: '*'
+
+HeaderFilterRegex: '.*/src/repo/.*'
+
+CheckOptions:
+  - key: performance-unnecessary-value-param.AllowedTypes
+    value: 'shared_ptr;SharedPtr;ConstSharedPtr'
+  - key: bugprone-reserved-identifier.AllowedIdentifiers
+    value: '^[A-Z0-9_]+__[A-Z0-9_]+_HPP_$'

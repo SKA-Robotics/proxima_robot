@@ -58,7 +58,7 @@
     <origin xyz="0 0 0.1" rpy="0 0 0"/>
   </joint>
 
-  <link name="link_2"> 
+  <link name="link_2">
     <visual>
       <geometry>
         <mesh filename="package://sirius_description/meshes/manipulators/6DOF/GP1.STL" scale="0.001 0.001 0.001"/>
@@ -186,7 +186,7 @@
     </visual>
     <collision>
       <geometry>
-        <mesh filename="package://sirius_description/meshes/manipulators/6DOF/gripper.STL" scale="0.001 0.001 0.001"/>     
+        <mesh filename="package://sirius_description/meshes/manipulators/6DOF/gripper.STL" scale="0.001 0.001 0.001"/>
       </geometry>
       <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
     </collision>

@@ -1,4 +1,5 @@
 import os
+
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
@@ -19,24 +20,19 @@ def generate_launch_description():
         'manipulator',
         default_value='none',
         description='Manipulator verion',
-        choices=['none', '5DOF', '6DOF']
+        choices=['none', '5DOF', '6DOF'],
     )
 
     robot_description = ParameterValue(
-        Command(['xacro ', xacro_path,
-                 ' manipulator:=', LaunchConfiguration('manipulator')
-                 ]),
-        value_type=str
+        Command(['xacro ', xacro_path, ' manipulator:=', LaunchConfiguration('manipulator')]),
+        value_type=str,
     )
 
     robot_state_publisher_node = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
         name='robot_state_publisher',
-        parameters=[{'robot_description': robot_description}]
+        parameters=[{'robot_description': robot_description}],
     )
 
-    return LaunchDescription([
-        manipulator_version_arg,
-        robot_state_publisher_node
-    ])
+    return LaunchDescription([manipulator_version_arg, robot_state_publisher_node])

@@ -37,7 +37,7 @@
     <child link="cylinder"/>
     <origin xyz="0 0 ${base_length}"/>
     <axis xyz="0 0 1"/>
-  </joint>  
+  </joint>
 
   <link name="cylinder">
     <visual>

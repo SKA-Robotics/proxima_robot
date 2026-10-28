@@ -31,7 +31,7 @@
     <parent link="root_link"/>
     <child link="manipulator_base_link"/>
   </joint>
-  
+
   <link
     name="manipulator_base_link">
     <inertial>
@@ -377,7 +377,7 @@
       <mesh filename="package://sirius_description/meshes/6dof_manip/gripper.stl" scale="0.001 0.001 0.001"/>
     </geometry>
   </collision>
-</link> 
+</link>
 
 <link name="gripper_left">
   <inertial>
@@ -438,7 +438,7 @@
 </joint>
 
 <link name="manip_camera_bracket">
-    
+
     <visual>
       <origin xyz="0.0 0.01 0.0" rpy="0 0 0"/>
       <geometry>
@@ -458,7 +458,7 @@
           <color rgba="0.2 0.2 0.2 1"/>
       </material>
     </collision>
-    
+
   </link>
 
   <joint name="link6_to_bracket_joint" type="fixed">
@@ -487,11 +487,11 @@
   <joint name="manip_camera_joint" type="fixed">
     <parent link="manip_camera_bracket"/>
     <child link="manip_camera"/>
-    <origin xyz="0.0 0.055 0.005" rpy="0.0 -2.094 1.5708"/> 
+    <origin xyz="0.0 0.055 0.005" rpy="0.0 -2.094 1.5708"/>
   </joint>
 
   <link name="manip_camera_optical"/>
-  
+
   <joint name="manip_camera_optical_joint" type="fixed">
     <parent link="manip_camera"/>
     <child link="manip_camera_optical"/>
@@ -1159,5 +1159,5 @@
     <child link="root_link"/>
     <origin rpy="0 0 0" xyz="0.1145 0 0.293"/>
   </joint>
-  
+
 </robot>

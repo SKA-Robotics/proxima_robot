@@ -10,7 +10,7 @@ PACKAGE = 'proxima_description'
 VARIANTS = [
     ('proxima.urdf.xacro', {'manipulator': 'none'}),
     ('proxima.urdf.xacro', {'manipulator': '6DOF'}),
-    ('proxima.urdf.xacro', {'manipulator': '6DOF', 'manipulator_only': 'true'})
+    ('proxima.urdf.xacro', {'manipulator': '6DOF', 'manipulator_only': 'true'}),
 ]
 
 
@@ -63,7 +63,8 @@ def test_single_tree(robot):
     edges = {}
     for joint in _joints(robot):
         edges.setdefault(joint.find('parent').get('link'), []).append(
-            joint.find('child').get('link'))
+            joint.find('child').get('link')
+        )
     reached, stack = set(), list(roots)
     while stack:
         link = stack.pop()
@@ -76,6 +77,6 @@ def test_meshes_exist(robot):
     for mesh in robot.iter('mesh'):
         uri = mesh.get('filename')
         assert uri.startswith('package://'), f'mesh is not a package:// URI: {uri}'
-        package, _, relative = uri[len('package://'):].partition('/')
+        package, _, relative = uri[len('package://') :].partition('/')
         path = os.path.join(get_package_share_directory(package), relative)
         assert os.path.isfile(path), f'missing mesh: {uri}'

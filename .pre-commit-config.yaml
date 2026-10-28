@@ -1,0 +1,30 @@
+default_install_hook_types: [pre-push]
+default_stages: [pre-commit, pre-push]   # pre-commit: ręczne uruchomienie i CI
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-xml          # package.xml, xacro, URDF
+      - id: check-merge-conflict
+      - id: check-added-large-files
+        args: [--maxkb=10000]   # meshe STL mają po kilka MB
+
+  # Python: linter + formatter
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.0
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  # C++: formatowanie
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v19.1.7
+    hooks:
+      - id: clang-format
+        types_or: [c++, c]

@@ -1,4 +1,4 @@
-# proxima_common
+# proxima_robot
 Packages common to both physical and simulated Proxima robot.
 
 ## Test moteusów
@@ -62,7 +62,7 @@ ros2 topic pub --once /joint_trajectory_controller/joint_trajectory trajectory_m
 - Ustawić P1 - P3 na oczekiwane pozycje (W radianach)
 - Ruch będzie trwał ustaloną ilość sekund
 
-Sterowanie suwakami
+Sterowanie suwakami:
 - Uruchomić rqt z terminala systemowego (nie VS Code)
 - Plugins -> Robot tools -> Joint trajectory controller
 - Wybrać uruchomiony kontroler i włączyć

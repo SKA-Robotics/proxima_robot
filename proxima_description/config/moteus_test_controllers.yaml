@@ -8,13 +8,12 @@ controller_manager:
     # Zdefiniowany, ale NIE uruchamiany w launchu testowym (write() jest jeszcze pusty).
     # Gdy zaimplementujesz write(), możesz go włączyć:
     #   ros2 run controller_manager spawner forward_position_controller
-    forward_position_controller:
-      type: forward_command_controller/ForwardCommandController
+    position_controller:
+      type: position_controllers/JointGroupPositionController
 
-forward_position_controller:
+position_controller:
   ros__parameters:
     joints:
       - joint1
       - joint2
       - joint3
-    interface_name: position

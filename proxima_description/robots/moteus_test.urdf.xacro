@@ -54,7 +54,7 @@
 
   <!-- ros2_control -->
   <xacro:proxima_manip_ros2_control
-    name="ProximaManipSystem"
+    name="Proxima_Manip_System"
     use_mock_hardware="$(arg use_mock_hardware)"
     can_id_1="$(arg can_id_1)"
     can_id_2="$(arg can_id_2)"

@@ -1,6 +1,8 @@
 controller_manager:
   ros__parameters:
     update_rate: 100  # Hz – na test połączenia w zupełności wystarczy
+    joint_trajectory_controller:
+      type: "joint_trajectory_controller/JointTrajectoryController"
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
@@ -8,12 +10,28 @@ controller_manager:
     # Zdefiniowany, ale NIE uruchamiany w launchu testowym (write() jest jeszcze pusty).
     # Gdy zaimplementujesz write(), możesz go włączyć:
     #   ros2 run controller_manager spawner forward_position_controller
-    position_controller:
-      type: position_controllers/JointGroupPositionController
-
-position_controller:
+joint_trajectory_controller:
   ros__parameters:
     joints:
       - joint1
       - joint2
       - joint3
+
+    command_interfaces:
+      - position
+
+    state_interfaces:
+      - position
+      - velocity
+
+    action_monitor_rate: 20.0
+
+    allow_partial_joints_goal: false
+    interpolate_from_desired_state: true
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 10.0
+      joint1:
+        trajectory: 0.05
+        goal: 0.03
+

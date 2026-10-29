@@ -27,7 +27,7 @@ def generate_launch_description():
         DeclareLaunchArgument('can_id_2', default_value='2', description='CAN ID silnika joint2'),
         DeclareLaunchArgument('can_id_3', default_value='3', description='CAN ID silnika joint3'),
         DeclareLaunchArgument(
-            'effort_max', default_value='1.0', description='Maksymalny moment [Nm] (wszystkie przeguby)'),
+            'effort_max', default_value='15', description='Maksymalny moment [Nm] (wszystkie przeguby)'),
         DeclareLaunchArgument('rviz', default_value='false', description='Uruchom RViz'),
     ]
 

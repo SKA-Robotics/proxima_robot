@@ -354,7 +354,6 @@ hardware_interface::return_type MoteusSystem::write(
       frames_to_send_.push_back(joint.controller->MakeQuery());
     }
     else{
-      RCLCPP_INFO(get_logger(), "Started write %f", position_command.position);
       frames_to_send_.push_back(joint.controller->MakePosition(position_command));
     }
   }

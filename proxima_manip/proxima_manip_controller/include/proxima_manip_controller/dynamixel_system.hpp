@@ -13,12 +13,27 @@
 #include "rclcpp_lifecycle/node_interfaces/lifecycle_node_interface.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 
+#include <dynamixel_sdk/dynamixel_sdk.h>
+
 namespace proxima_manip_controller
 {
+
+struct DynamixelJoint
+{
+  int servo_id = -1;
+  double command_position = 0.0;
+  double state_position = 0.0;
+  std::string joint_name;
+  std::string model;
+};
 
 class DynamixelSystem : public hardware_interface::SystemInterface
 {
 public:
+  //ogarnij to tototoot
+  std::vector<hardware_interface::StateInterface> export_state_interfaces() override;
+  std::vector<hardware_interface::CommandInterface> export_command_interfaces() override;
+
   hardware_interface::CallbackReturn on_init(
     const hardware_interface::HardwareComponentInterfaceParams & params) override;
 
@@ -45,6 +60,15 @@ public:
 
   hardware_interface::return_type write(
     const rclcpp::Time & time, const rclcpp::Duration & period) override;
+
+private:
+  int baud_rate_;
+  std::string port_name_;
+  std::vector<DynamixelJoint> joints_;
+  dynamixel::PortHandler * portHandler_;
+  dynamixel::PacketHandler * packetHandler1_;
+  dynamixel::PacketHandler * packetHandler2_;
+
 };
 
 }  // namespace proxima_manip_controller

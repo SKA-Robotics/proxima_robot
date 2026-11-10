@@ -8,13 +8,13 @@ controller_manager:
 
 
     grip_action_controller:
-      type: position_controllers/GripperActionController
+      type: parallel_gripper_action_controller/GripperActionController
 
 
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
 
-    wheel_controller:  # TO DO
+    wheel_controller:
       type: forward_command_controller/ForwardCommandController
 
 arm_controller:
@@ -36,7 +36,7 @@ grip_action_controller:
   ros__parameters:
     joint: joint_gripper_left
 
-wheel_controller:  # TO DO
+wheel_controller:
   ros__parameters:
     joints:
       - front_left_wheel_joint

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-package_name = 'sirius_telop'
+package_name = 'proxima_telop'
 
 setup(
     name=package_name,
@@ -31,8 +31,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'joystick_control = sirius_telop.joystick_control:main',
-            'ros_joy_receiver = sirius_telop.ros_joy_receiver:main'
+            'joystick_control = proxima_telop.joystick_control:main',
+            'ros_joy_receiver = proxima_telop.ros_joy_receiver:main'
         ],
     },
 )

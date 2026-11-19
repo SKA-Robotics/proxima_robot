@@ -25,7 +25,7 @@ class RosJoyReceiver(Node):
 def main(args=None):
     rclpy.init(args=args)
 
-    ros_joy_receiver = RosJoyReceiver()
+    ros_joy_receiver = RosJoyReceiver("/joy") # /joy is given in manip config, don't want to import again but you could i guess
 
     rclpy.spin(ros_joy_receiver)
 

@@ -82,6 +82,8 @@ max_setpoint_orientation_distance: 0.12
 trajectory_duration: 6.0
 max_ev: [0.2, 0.2, 0.2, 0.7, 0.4, 0.4] # Maximum cartesian velocity of the end effector
 max_qd: [0.3, 0.3, 0.3, 0.6, 0.6, 1.0] # Maximum velocity of each of the arm joints
+max_drive_linear: 1.0 #(m/s)
+max_drive_angular: 1.5 #(rad/s)
 
 # Robot parameters
 robot_joint_names: ["joint0", "joint1", "joint2", "joint3", "joint4", "joint5"]
@@ -94,3 +96,4 @@ joy_topic: "/joy"
 pose_topic: "/pose_cmd"
 gripper_cmd_topic: "/grip_action_controller/gripper_cmd"
 preset_request_topic: "/preset_request"
+mobile_base_cmd_topic: "/cmd_vel_joy"

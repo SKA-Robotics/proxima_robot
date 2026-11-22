@@ -3,7 +3,7 @@ from typing import List, Dict
 from proxima_telop.ros_joy_receiver import RosJoyReceiver
 from proxima_telop.ros_command_sender import RosCommandSender
 from proxima_telop.gripper_controller import GripperController
-from proxima_telop.utils import max_abs, trig_to_axis, JoystickTranslator
+from proxima_telop.utils import max_abs, trig_to_axis, JoystickTranslator, Debouncing
 from proxima_telop.manip_config import ManipConfig, DEFAULT_CONFIG, load_ros_params
 import time
 import rclpy
@@ -35,6 +35,9 @@ class JoystickControl(Node):
         JOINT_6 = 12
         GRIPPER_OPEN = 13
         GRIPPER_CLOSE = 14
+        DRIVE_VX = 15
+        DRIVE_VY = 16
+        DRIVE_WZ = 17
 
     class Button(Enum):
         SET_FRAME_TOOL = 1
@@ -45,6 +48,10 @@ class JoystickControl(Node):
         GOTO_ZERO = 6
         GOTO_GROUND = 7
         GOTO_SIDE_BOX = 8
+        SET_DRIVE_MODE = 9
+        SET_ARM_MODE = 10
+        GEAR_UP = 11
+        GEAR_DOWN = 12
 
     class SpaceMode(Enum):
         CARTESIAN = 0
@@ -54,6 +61,10 @@ class JoystickControl(Node):
         LINEAR = 0
         ANGULAR = 1
 
+    class SubsystemMode(Enum):
+        ARM = 0
+        DRIVE = 1
+
     def __init__(self, config: ManipConfig = DEFAULT_CONFIG):
         super().__init__('joystick_control')
         if config is DEFAULT_CONFIG:
@@ -61,6 +72,11 @@ class JoystickControl(Node):
         self.config = config
         self.movement_mode = self.MovementMode.LINEAR
         self.space_mode = self.SpaceMode.JOINT
+        self.subsystem_mode = self.SubsystemMode.DRIVE  
+        self.drive_gears = [0.25, 0.5, 0.75, 1.0]
+        self.gear_index = 1  
+        self.gear_up_debouncer = Debouncing()
+        self.gear_down_debouncer = Debouncing()
         self.frame = config.base_frame_id
         self.gui = None
 
@@ -136,24 +152,59 @@ class JoystickControl(Node):
             self.Button.GOTO_ZERO: input["up_cross"],
             self.Button.GOTO_GROUND: input["down_cross"],
             self.Button.GOTO_SIDE_BOX: input["right_cross"],
+            self.Button.SET_ARM_MODE: input["X_button"],
+            self.Button.SET_DRIVE_MODE: input["A_button"],
+            self.Button.GEAR_UP: input["left_bumper"],
+            self.Button.GEAR_DOWN: input["right_bumper"]
         }
 
     def _handle_buttons(self, buttons: Dict[Button, bool]):
-        if buttons[self.Button.SET_FRAME_TOOL]:
-            self.frame = self.config.twist_cmd_frame_id
-            self.space_mode = self.SpaceMode.CARTESIAN
-        elif buttons[self.Button.SET_FRAME_BASE]:
-            self.frame = self.config.base_frame_id
-            self.space_mode = self.SpaceMode.CARTESIAN
-        elif buttons[self.Button.SET_JOINT_MODE]:
-            self.space_mode = self.SpaceMode.JOINT
+        if buttons[self.Button.SET_DRIVE_MODE] and self.subsystem_mode != self.SubsystemMode.DRIVE:
+        # stop arm motion before switching to drive
+            self.command_sender.send_twist_command([0.0] * 6, self.frame)
+            self.command_sender.send_joint_command([0.0] * 6, self.config.robot_joint_names)
+            self.subsystem_mode = self.SubsystemMode.DRIVE
 
-        if buttons[self.Button.CHANGE_MOVEMENT_MODE]:
-            self.movement_mode = self.MovementMode.ANGULAR
-        else:
-            self.movement_mode = self.MovementMode.LINEAR
+        elif buttons[self.Button.SET_ARM_MODE] and self.subsystem_mode != self.SubsystemMode.ARM:
+            # stop wheels before switching to arm
+            self.command_sender.send_drive_command(0.0, 0.0, 0.0)
+            self.subsystem_mode = self.SubsystemMode.ARM
 
+        if self.subsystem_mode == self.SubsystemMode.ARM
+            if buttons[self.Button.SET_FRAME_TOOL]:
+                self.frame = self.config.twist_cmd_frame_id
+                self.space_mode = self.SpaceMode.CARTESIAN
+            elif buttons[self.Button.SET_FRAME_BASE]:
+                self.frame = self.config.base_frame_id
+                self.space_mode = self.SpaceMode.CARTESIAN
+            elif buttons[self.Button.SET_JOINT_MODE]:
+                self.space_mode = self.SpaceMode.JOINT
+
+            if buttons[self.Button.CHANGE_MOVEMENT_MODE]:
+                self.movement_mode = self.MovementMode.ANGULAR
+            else:
+                self.movement_mode = self.MovementMode.LINEAR
+
+        elif self.subsystem_mode == self.SubsystemMode.DRIVE:
+            self.gear_up_debouncer.update(buttons[self.Button.GEAR_UP])
+            self.gear_down_debouncer.update(buttons[self.Button.GEAR_DOWN])
+
+            if self.gear_up_debouncer.is_rising_edge:
+                self.gear_index = min(self.gear_index + 1, len(self.drive_gears) - 1)
+                
+            if self.gear_down_debouncer.is_rising_edge:
+                self.gear_index = max(self.gear_index - 1, 0)
+                
     def _publish_command(self, axes: Dict[Axis, float]):
+        #DRIVE Logic
+        if self.subsystem_mode == self.SubsystemMode.DRIVE:
+            scale = self.drive_gears[self.gear_index]
+            vx = axes[self.Axis.DRIVE_VX] * self.config.max_drive_linear * scale
+            vy = axes[self.Axis.DRIVE_VY] * self.config.max_drive_linear * scale
+            wz = axes[self.Axis.DRIVE_WZ] * self.config.max_drive_angular * scale
+            self.command_sender.send_drive_command(vx, vy, wz)
+            return 
+        #ARM Logic
         if self.space_mode == self.SpaceMode.CARTESIAN:
             if self.movement_mode == self.MovementMode.LINEAR:
                 command = [

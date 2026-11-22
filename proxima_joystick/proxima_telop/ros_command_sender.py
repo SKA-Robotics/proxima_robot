@@ -1,5 +1,5 @@
 from typing import List
-from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import Twist, TwistStamped
 from control_msgs.msg import JointJog
 from control_msgs.action import GripperCommand
 from sensor_msgs.msg import JointState
@@ -22,6 +22,7 @@ class RosCommandSender(Node):
         self._last_gripper_position = None
         self.preset_publisher = self.create_publisher(
             JointState, preset_publisher_topic, 10)
+        self.cmd_vel_publisher = self.create_publisher(Twist, mobile_base_cmd_topic, 10)
 
     def send_twist_command(self, twist_data: List[float], frame_id: str):
         command = TwistStamped()
@@ -65,3 +66,10 @@ class RosCommandSender(Node):
         command = JointState()
         command.position = target_q
         self.preset_publisher.publish(command)
+
+    def send_drive_command(self, vx: float, vy: float, wz: float):
+        msg = Twist()
+        msg.linear.x = float(vx)
+        msg.linear.y = float(vy)
+        msg.angular.z = float(wz)
+        self.cmd_vel_publisher.publish(msg)

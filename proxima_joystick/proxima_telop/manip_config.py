@@ -17,6 +17,8 @@ class ManipConfig:
     max_qd: np.ndarray = np.array(
         [0.3, 0.3, 0.3, 0.6, 0.6,
          1.0])  # Maximum velocity of each of the arm joints
+    max_drive_linear: float = 1.0
+    max_drive_angular: float = 1.5
 
     # Robot params
     robot_joint_names: List[str] = [
@@ -33,6 +35,7 @@ class ManipConfig:
     pose_topic: str = "/pose_cmd"
     joint_topic: str = "/joint_states"
     preset_request_topic: str = "/preset_request"
+    mobile_base_cmd_topic: str = "/cmd_vel_joy"
     gripper_cmd_topic: str = "/grip_action_controller/gripper_cmd"
 
 
@@ -94,5 +97,8 @@ def load_ros_params(node: Node) -> ManipConfig:
         node, "gripper_cmd_topic", config.gripper_cmd_topic)
     config.preset_request_topic = _param(
         node, "preset_request_topic", config.preset_request_topic)
+    config.max_drive_linear = _param(node, "max_drive_linear", config.max_drive_linear)
+    config.max_drive_angular = _param(node, "max_drive_angular", config.max_drive_angular)
+    config.mobile_base_cmd_topic = _param(node, "mobile_base_cmd_topic", config.mobile_base_cmd_topic)
 
     return config

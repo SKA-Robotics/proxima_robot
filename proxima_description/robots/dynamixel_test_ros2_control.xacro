@@ -1,29 +1,38 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:arg name="use_mock_hardware" default="false" />
+<!-- https://github.com/SKA-Robotics/sirius_common/blob/noetic/manip/config/roboszpon_driver.yaml
+manip_roboszpon_driver:
+  joints:
+    joint4:
+      node_id: 0
+    joint5:
+      node_id: 1
+    joint6:
+      node_id: 2
+      -->
+
+    <xacro:arg name="use_mock_hardware" default="true" />
 
     <xacro:macro name="dynamixel_system_control" params="name port_name baud_rate error_timeout_ms">
         <ros2_control name="${name}" type="system">
             
             <hardware>
-                <!-- wtyczka ma false, zastepujesz mockiem-->
                 <xacro:if value="$(arg use_mock_hardware)">
                     <plugin>mock_components/GenericSystem</plugin>
                 </xacro:if>
                 
                 <xacro:unless value="$(arg use_mock_hardware)">
                     <param name="port_name">${port_name}</param>
-                    <param name="baud_rate">${baud_rate}</param>
                     <param name="error_timeout_ms">${error_timeout_ms}</param>
                     <plugin>proxima_manip_controller/DynamixelSystem</plugin>
                 </xacro:unless>
             </hardware>
 
-            <!-- ID ZROBIC -->
-            <xacro:dynamixel_ax_12a_joint_interface name="joint3" servo_id="3"/>
-            <xacro:dynamixel_mx_106t_joint_interface name="joint4" servo_id="4"/>
-            <xacro:dynamixel_mx_106t_joint_interface name="joint5" servo_id="5"/> 
+            <xacro:dynamixel_ax_12a_joint_interface name="joint4" servo_id="0"/>
+            <xacro:dynamixel_mx_106t_joint_interface name="joint5" servo_id="1"/>
+            <xacro:dynamixel_mx_106t_joint_interface name="joint6" servo_id="2"/>
+            <xacro:dynamixel_xm430-w350_joint_interface name="joint_gripper" servo_id="44"/>
                         
         </ros2_control>
     </xacro:macro>
@@ -57,4 +66,7 @@
         </joint>
     </xacro:macro>
 
+
+
+    
 </robot>

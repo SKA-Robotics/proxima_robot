@@ -4,9 +4,9 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import Command, FindExecutable, LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
-    # flaga decydujaca o wlaczeniu tego mocka
     use_mock_hardware = LaunchConfiguration('use_mock_hardware')
     
     declare_use_mock_hardware = DeclareLaunchArgument(
@@ -20,7 +20,10 @@ def generate_launch_description():
         PathJoinSubstitution([FindPackageShare('proxima_description'), 'robots', 'dynamixel_test.urdf.xacro']), ' ',
         'use_mock_hardware:=', use_mock_hardware
     ])
-    robot_description = {'robot_description': robot_description_content}
+    
+    robot_description = {
+    'robot_description': ParameterValue(robot_description_content, value_type=str)
+    }
 
     robot_controllers = PathJoinSubstitution([
         FindPackageShare('proxima_description'), 'config', 'dynamixel_test.yaml'

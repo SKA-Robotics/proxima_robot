@@ -1,6 +1,5 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-<!--ZMIEN PARAMETRY-->
     <xacro:macro name="dynamixel_MX-106T" params="name parent xyz rpy:='0 0 0'">
         
         <xacro:property name="dxl_mass" value="0.0546"/>
@@ -42,7 +41,6 @@
             <parent link="${name}_housing"/>
             <child link="${name}_output"/>
             <origin xyz="0 0 ${dxl_length}" rpy="0 0 0"/>
-            <!-- limity do ogarniecia -->
             <limit lower="-2.617" upper="2.617" effort="1.5" velocity="6.17"/>
             <axis xyz="0 0 1"/>
         </joint>

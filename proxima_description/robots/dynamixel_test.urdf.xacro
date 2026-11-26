@@ -9,18 +9,19 @@
 
     <link name="base_link" />
 
-    <xacro:dynamixel_AX-12A name="joint3" parent="base_link" xyz="0 0 0.05" rpy="0 0 0" />
-
-    <xacro:dynamixel_MX-106T name="joint4" parent="joint3_output" xyz="0 0 0.05" rpy="0 0 0" />
+    <xacro:dynamixel_AX-12A name="joint4" parent="base_link" xyz="0 0 0.05" rpy="0 0 0" />
 
     <xacro:dynamixel_MX-106T name="joint5" parent="joint4_output" xyz="0 0 0.05" rpy="0 0 0" />
 
+    <xacro:dynamixel_MX-106T name="joint6" parent="joint5_output" xyz="0 0 0.05" rpy="0 0 0" />
 
-    <!--USTALIC PORT NAME-->
+    <xacro:dynamixel_MX-106T name="joint_gripper" parent="joint6_output" xyz="0 0 0.05" rpy="0 0 0" />
+
+    <!-- ip link show -->
     <xacro:dynamixel_system_control 
         name="DynamixelTestSystem" 
-        port_name="/dev/ttyUSB0"  
-        baud_rate="1000000" 
-        error_timeout_ms="100" />
+        port_name="can0"  
+        error_timeout_ms="100"
+        baud_rate="1000000" />
 
 </robot>

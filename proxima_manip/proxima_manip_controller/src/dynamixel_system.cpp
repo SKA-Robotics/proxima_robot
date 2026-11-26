@@ -1,10 +1,25 @@
 #include "proxima_manip_controller/dynamixel_system.hpp"
-#include "hardware_interface/types/hardware_interface_type_values.hpp" //do  wbudowane stale tekstowe dla interfejsu pozycji
-#include "rclcpp/rclcpp.hpp" //do logow
-#include "dynamixel_sdk/dynamixel_sdk.h"
-// https://github.com/ROBOTIS-GIT/DynamixelSDK/blob/main/c%2B%2B/example/protocol1.0/read_write/read_write.cpp
-// https://github.com/ROBOTIS-GIT/DynamixelSDK/blob/main/c%2B%2B/example/protocol2.0/read_write/read_write.cpp
-// !! na sztywno wpisane modele silnikow
+#include "hardware_interface/types/hardware_interface_type_values.hpp"
+#include "rclcpp/rclcpp.hpp"
+//socketCAN
+#include <linux/can.h>
+#include <sys/socket.h>
+#include <net/if.h>
+#include <cmath> 
+
+//adresy akcji z firmware'u
+#define MSG_MOTOR_COMMAND     0x01
+#define MSG_ACTION_REQUEST    0x02
+#define MSG_STATUS_REPORT     0x03
+#define MSG_AXIS_REPORT       0x04
+#define MSG_MOTOR_REPORT      0x05
+
+#define CTRLSIGNAL_POSITION 0x02
+
+#define ACTION_ARM 0x00
+#define ACTION_DISARM 0x01
+#define ACTION_SOFTWARE_RESET 0x05
+
 
 namespace proxima_manip_controller
 {
@@ -18,7 +33,6 @@ hardware_interface::CallbackReturn DynamixelSystem::on_init(
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  baud_rate_ = std::stoi(info_.hardware_parameters.at("baud_rate"));
   port_name_ = info_.hardware_parameters.at("port_name");
   joints_.clear();
 
@@ -50,6 +64,14 @@ std::vector<hardware_interface::StateInterface> DynamixelSystem::export_state_in
   std::vector<hardware_interface::StateInterface> state_interfaces;
   
   for (auto & joint : joints_) {
+
+    state_interfaces.emplace_back(
+      hardware_interface::StateInterface(
+        joint.joint_name,
+        hardware_interface::HW_IF_VELOCITY,
+        &joint.state_velocity)
+    );
+
     state_interfaces.emplace_back(
       hardware_interface::StateInterface(
         joint.joint_name, 
@@ -78,86 +100,77 @@ std::vector<hardware_interface::CommandInterface> DynamixelSystem::export_comman
 hardware_interface::CallbackReturn DynamixelSystem::on_configure(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  RCLCPP_INFO(rclcpp::get_logger("DynamixelSystem"), "konfiguracja portu: %s", port_name_.c_str());
-
-  portHandler_ = dynamixel::PortHandler::getPortHandler(port_name_.c_str());
-  packetHandler1_ = dynamixel::PacketHandler::getPacketHandler(1.0);
-  packetHandler2_ = dynamixel::PacketHandler::getPacketHandler(2.0);
-
-  if (!portHandler_->openPort()) {
-    RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "blad: nie mozna otworzyc portu %s", port_name_.c_str());
+  //otwarcie gniazda dla cana
+  can_socket_ = ::socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW);
+  if (can_socket_ < 0) {
+    RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "Cannot create CAN socket");
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  if (!portHandler_->setBaudRate(baud_rate_)) {
-    RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "blad: nie mozna ustawic predkosci %d", baud_rate_);
+  // obiernamy numer socketa cana nadanego przez linuxa
+  unsigned int ifindex = if_nametoindex(port_name_.c_str());
+  if (ifindex == 0) {
+    RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "No interface found %s", port_name_.c_str());
+    ::close(can_socket_);
+    can_socket_ = -1;
     return hardware_interface::CallbackReturn::ERROR;
   }
 
-  RCLCPP_INFO(rclcpp::get_logger("DynamixelSystem"), "port otwarty.");
+  // robisz tego structa dla linuxa zeby wiedzial o adresie kabla do binda potrzebne
+  struct sockaddr_can addr{};
+  addr.can_family = AF_CAN;
+  addr.can_ifindex = ifindex;
+
+  if (::bind(can_socket_, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
+    RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "error bind() na %s", port_name_.c_str());
+    ::close(can_socket_);
+    can_socket_ = -1;
+    return hardware_interface::CallbackReturn::ERROR;
+  }
+
+  RCLCPP_INFO(rclcpp::get_logger("DynamixelSystem"), "CAN (%s) open.", port_name_.c_str());
   return hardware_interface::CallbackReturn::SUCCESS;
 }
-
 
 hardware_interface::CallbackReturn DynamixelSystem::on_activate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-    RCLCPP_INFO(rclcpp::get_logger("DynamixelSystem"), "aktywacja");
+  RCLCPP_INFO(rclcpp::get_logger("DynamixelSystem"), "activation (ACTION_ARM)");
 
-  //control table
-  const uint16_t ADDR_AX_TORQUE_ENABLE = 24; // 1.0
-  const uint16_t ADDR_MX_TORQUE_ENABLE = 64; // 2.0
-  const uint8_t TORQUE_ON = 1;
+  struct can_frame frame{};
+  frame.can_id = (0 << 5) | MSG_ACTION_REQUEST;
+  frame.can_dlc = 1;
+  frame.data[0] = ACTION_ARM;
 
-for (auto & joint : joints_) {
-  uint8_t dxl_error = 0;
-  int dxl_comm_result = COMM_TX_FAIL;
-
-  if (joint.model == "ax") {
-    dxl_comm_result = packetHandler1_->write1ByteTxRx(
-      portHandler_, joint.servo_id, ADDR_AX_TORQUE_ENABLE, TORQUE_ON, &dxl_error);
-
-    if (dxl_comm_result != COMM_SUCCESS) {
-      RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "blad aktywacji serwa id %d: %s",
-                   joint.servo_id, packetHandler1_->getTxRxResult(dxl_comm_result));
-      return hardware_interface::CallbackReturn::ERROR;
-    }
-    else if (dxl_error != 0) {
-      RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "blad sprzetowy serwa id %d: %s",
-                   joint.servo_id, packetHandler1_->getRxPacketError(dxl_error));
-    }
+  if (::write(can_socket_, &frame, sizeof(frame)) != sizeof(frame)) {
+    RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "error for command ACTION_ARM");
+    return hardware_interface::CallbackReturn::ERROR;
   }
-  else if (joint.model == "mx" || joint.model == "xm") {
-    dxl_comm_result = packetHandler2_->write1ByteTxRx(
-      portHandler_, joint.servo_id, ADDR_MX_TORQUE_ENABLE, TORQUE_ON, &dxl_error);
 
-    if (dxl_comm_result != COMM_SUCCESS) {
-      RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "blad aktywacji serwa id %d: %s",
-                   joint.servo_id, packetHandler2_->getTxRxResult(dxl_comm_result));
-      return hardware_interface::CallbackReturn::ERROR;
-    }
-    else if (dxl_error != 0) {
-      RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), "blad sprzetowy serwa id %d: %s",
-                   joint.servo_id, packetHandler2_->getRxPacketError(dxl_error));
-    }
-  }
-}
-
-  RCLCPP_INFO(rclcpp::get_logger("DynamixelSystem"), "wszystkie silniki dzialaja");
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::CallbackReturn DynamixelSystem::on_deactivate(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  // TODO: implement
+  RCLCPP_INFO(rclcpp::get_logger("DynamixelSystem"), "deactivation (ACTION_DISARM)");
+
+  struct can_frame frame{};
+  frame.can_id = (0 << 5) | MSG_ACTION_REQUEST;
+  frame.can_dlc = 1;
+  frame.data[0] = ACTION_DISARM;
+
+  ::write(can_socket_, &frame, sizeof(frame));
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
 hardware_interface::CallbackReturn DynamixelSystem::on_cleanup(
   const rclcpp_lifecycle::State & /*previous_state*/)
 {
-  // TODO: implement
+  if (can_socket_ >= 0) {
+    ::close(can_socket_);
+    can_socket_ = -1;
+  }
   return hardware_interface::CallbackReturn::SUCCESS;
 }
 
@@ -178,70 +191,34 @@ hardware_interface::CallbackReturn DynamixelSystem::on_error(
 hardware_interface::return_type DynamixelSystem::read(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
-  //z readwrite.cpp robotis
-  int dxl_comm_result = COMM_TX_FAIL; // udana komunikacja lub nie
-  uint8_t dxl_error = 0;              //bledy
-  uint16_t dxl1_present_position = 0;  // dla protocol1
-  uint32_t dxl2_present_position = 0;   //dla protocol2
+  if (can_socket_ < 0) {
+    return hardware_interface::return_type::ERROR;
+  }
 
-  //linia 44
-  const uint16_t ADDR_AX_PRESENT_POSITION = 36; 
-  const uint32_t ADDR_X_PRESENT_POSITION = 132; //dla mx i xm
+  struct can_frame frame{};
 
-  for (auto & joint : joints_) {
-    
-    if (joint.model == "ax") {
-      
-      // linia 191
-      dxl_comm_result = packetHandler1_->read2ByteTxRx(
-        portHandler_, 
-        joint.servo_id, 
-        ADDR_AX_PRESENT_POSITION, 
-        &dxl1_present_position, 
-        &dxl_error
-      );
+  while (::read(can_socket_, &frame, sizeof(frame)) == sizeof(frame)) {
+    int node_id = frame.can_id >> 5;                 //usuniecie ostatmich 5 bitow
+    int msg_id  = frame.can_id & 0x1F;              //czytanie wszystkich ramek
 
-      if (dxl_comm_result != COMM_SUCCESS) {
-        RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), 
-          "Błąd komunikacji przy odczycie ID: %d. %s", 
-          joint.servo_id, packetHandler1_->getTxRxResult(dxl_comm_result));
-      } 
-      else if (dxl_error != 0) {
-        RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), 
-          "Błąd sprzętowy silnika ID: %d. %s", 
-          joint.servo_id, packetHandler1_->getRxPacketError(dxl_error));
-      } 
-      else {
-        // na radiany trzeba
-        joint.state_position = static_cast<double>(dxl1_present_position);
+    if (msg_id != MSG_AXIS_REPORT || frame.can_dlc < 8) {
+      continue;
+    }
+
+    uint8_t pos_bytes[4] = {frame.data[3], frame.data[2], frame.data[1], frame.data[0]};
+    uint8_t vel_bytes[4] = {frame.data[7], frame.data[6], frame.data[5], frame.data[4]};
+
+    float pos_rot = 0.0f;
+    float vel_rot = 0.0f;
+    std::memcpy(&pos_rot, pos_bytes, sizeof(float));
+    std::memcpy(&vel_rot, vel_bytes, sizeof(float));
+
+    for (auto & joint : joints_) {        //na obroty przeliczanie
+      if (joint.servo_id == node_id) {
+        joint.state_position = static_cast<double>(pos_rot) * 2.0 * M_PI;
+        joint.state_velocity = static_cast<double>(vel_rot) * 2.0 * M_PI;
+        break;
       }
-
-    } 
-    else if (joint.model == "xm" || joint.model == "mx") {
-
-      dxl_comm_result = packetHandler2_->read4ByteTxRx(
-        portHandler_, 
-        joint.servo_id, 
-        ADDR_X_PRESENT_POSITION, 
-        &dxl2_present_position,
-        &dxl_error
-      );
-
-      if (dxl_comm_result != COMM_SUCCESS) {
-        RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"),
-        "Błąd komunikacji przy odczycie ID: %d. %s", 
-        joint.servo_id, packetHandler2_->getTxRxResult(dxl_comm_result));
-      }
-      else if (dxl_error != 0){
-        RCLCPP_ERROR(rclcpp::get_logger("DynamixelSystem"), 
-        "Błąd sprzetu silnika id: %d. %s",
-        joint.servo_id, packetHandler2_->getRxPacketError(dxl_error));
-      }
-      else {
-        //na radiany
-        joint.state_position = static_cast<double>(dxl2_present_position);
-      }
-        
     }
   }
 
@@ -251,6 +228,43 @@ hardware_interface::return_type DynamixelSystem::read(
 hardware_interface::return_type DynamixelSystem::write(
   const rclcpp::Time & /*time*/, const rclcpp::Duration & /*period*/)
 {
+  if (can_socket_ < 0) {
+    return hardware_interface::return_type::ERROR;
+  }
+
+  for (auto & joint : joints_) {
+    struct can_frame frame{};
+
+    float pos_rot = static_cast<float>(joint.command_position / (2.0 * M_PI));
+
+    uint8_t bytes[4];
+    std::memcpy(bytes, &pos_rot, sizeof(float));
+
+    if (joint.servo_id == 0x2c) {
+      frame.can_id = (0x2c << 5);
+      frame.can_dlc = 4;
+      frame.data[0] = bytes[3];
+      frame.data[1] = bytes[2];
+      frame.data[2] = bytes[1];
+      frame.data[3] = bytes[0];
+    } else {
+      frame.can_id = (joint.servo_id << 5) | MSG_MOTOR_COMMAND;    //przesuniecie od ostatmniego do przodu o 5 id silnika
+      frame.can_dlc = 8;
+      frame.data[0] = CTRLSIGNAL_POSITION;  // tryb pozycji (CTRLSIGNAL_POSITION)
+      frame.data[1] = bytes[3];
+      frame.data[2] = bytes[2];
+      frame.data[3] = bytes[1];
+      frame.data[4] = bytes[0];
+    }
+
+    if (::write(can_socket_, &frame, sizeof(frame)) != sizeof(frame)) {
+      RCLCPP_WARN(
+        rclcpp::get_logger("DynamixelSystem"),
+        "Błąd wysyłania ramki CAN dla jointa %s (ID: %d)",
+        joint.joint_name.c_str(), joint.servo_id);
+    }
+  }
+
   return hardware_interface::return_type::OK;
 }
 
